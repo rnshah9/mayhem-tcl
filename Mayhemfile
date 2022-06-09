@@ -1,7 +1,6 @@
-project: rnshah9/mayhem-tcl
+project: tcl
 target: tclsh
-tests: null
 
 cmds:
-  - cmd: /repo/unix/tclsh @@
+  - cmd: /repo/unix/tclsh /test.tcl
     filepath: /test.tcl
