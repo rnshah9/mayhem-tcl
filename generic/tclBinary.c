@@ -408,43 +408,6 @@ TclGetBytesFromObj(
 /*
  *----------------------------------------------------------------------
  *
- * Tcl_GetByteArrayFromObj --
- *
- *	Attempt to get the array of bytes from the Tcl object. If the object
- *	is not already a ByteArray object, an attempt will be made to convert
- *	it to one.
- *
- * Results:
- *	Pointer to array of bytes representing the ByteArray object.
- *
- * Side effects:
- *	Frees old internal rep. Allocates memory for new internal rep.
- *
- *----------------------------------------------------------------------
- */
-
-#undef Tcl_GetByteArrayFromObj
-unsigned char *
-TclGetByteArrayFromObj(
-    Tcl_Obj *objPtr,		/* The ByteArray object. */
-    int *numBytesPtr)		/* If non-NULL, write the number of bytes
-				 * in the array here */
-{
-    return TclGetBytesFromObj(NULL, objPtr, numBytesPtr);
-}
-
-unsigned char *
-Tcl_GetByteArrayFromObj(
-    Tcl_Obj *objPtr,		/* The ByteArray object. */
-    size_t *numBytesPtr)	/* If non-NULL, write the number of bytes
-				 * in the array here */
-{
-    return Tcl_GetBytesFromObj(NULL, objPtr, numBytesPtr);
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * Tcl_SetByteArrayLength --
  *
  *	This procedure changes the length of the byte array for this object.
@@ -909,7 +872,7 @@ BinaryFormatCmd(
 				 * cursor has visited.*/
     const char *errorString;
     const char *errorValue, *str;
-    int offset, size;
+    size_t offset, size;
     size_t length;
 
     if (objc < 2) {
@@ -1008,14 +971,14 @@ BinaryFormatCmd(
 		arg++;
 		count = 1;
 	    } else {
-		int listc;
+		size_t listc;
 		Tcl_Obj **listv;
 
 		/*
 		 * The macro evals its args more than once: avoid arg++
 		 */
 
-		if (TclListObjGetElements(interp, objv[arg], &listc,
+		if (TclListObjGetElementsM(interp, objv[arg], &listc,
 			&listv) != TCL_OK) {
 		    return TCL_ERROR;
 		}
@@ -1023,7 +986,7 @@ BinaryFormatCmd(
 
 		if (count == BINARY_ALL) {
 		    count = listc;
-		} else if (count > (size_t)listc) {
+		} else if (count > listc) {
 		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 			    "number of elements in list does not match count",
 			    -1));
@@ -1047,16 +1010,16 @@ BinaryFormatCmd(
 	    if (count == BINARY_NOCOUNT) {
 		count = 1;
 	    }
-	    if ((count > (size_t)offset) || (count == BINARY_ALL)) {
+	    if ((count > offset) || (count == BINARY_ALL)) {
 		count = offset;
 	    }
-	    if (offset > (int)length) {
+	    if (offset > length) {
 		length = offset;
 	    }
 	    offset -= count;
 	    break;
 	case '@':
-	    if (offset > (int)length) {
+	    if (offset > length) {
 		length = offset;
 	    }
 	    if (count == BINARY_ALL) {
@@ -1072,7 +1035,7 @@ BinaryFormatCmd(
 	    goto badField;
 	}
     }
-    if (offset > (int)length) {
+    if (offset > length) {
 	length = offset;
     }
     if (length == 0) {
@@ -1151,7 +1114,7 @@ BinaryFormatCmd(
 	    value = 0;
 	    errorString = "binary";
 	    if (cmd == 'B') {
-		for (offset = 0; (size_t)offset < count; offset++) {
+		for (offset = 0; offset < count; offset++) {
 		    value <<= 1;
 		    if (str[offset] == '1') {
 			value |= 1;
@@ -1166,7 +1129,7 @@ BinaryFormatCmd(
 		    }
 		}
 	    } else {
-		for (offset = 0; (size_t)offset < count; offset++) {
+		for (offset = 0; offset < count; offset++) {
 		    value >>= 1;
 		    if (str[offset] == '1') {
 			value |= 128;
@@ -1213,7 +1176,7 @@ BinaryFormatCmd(
 	    value = 0;
 	    errorString = "hexadecimal";
 	    if (cmd == 'H') {
-		for (offset = 0; (size_t)offset < count; offset++) {
+		for (offset = 0; offset < count; offset++) {
 		    value <<= 4;
 		    if (!isxdigit(UCHAR(str[offset]))) {     /* INTL: digit */
 			errorValue = str;
@@ -1234,7 +1197,7 @@ BinaryFormatCmd(
 		    }
 		}
 	    } else {
-		for (offset = 0; (size_t)offset < count; offset++) {
+		for (offset = 0; offset < count; offset++) {
 		    value >>= 4;
 
 		    if (!isxdigit(UCHAR(str[offset]))) {     /* INTL: digit */
@@ -1286,7 +1249,7 @@ BinaryFormatCmd(
 	case 'q':
 	case 'Q':
 	case 'f': {
-	    int listc, i;
+	    size_t listc, i;
 	    Tcl_Obj **listv;
 
 	    if (count == BINARY_NOCOUNT) {
@@ -1299,13 +1262,13 @@ BinaryFormatCmd(
 		listc = 1;
 		count = 1;
 	    } else {
-		TclListObjGetElements(interp, objv[arg], &listc, &listv);
+		TclListObjGetElementsM(interp, objv[arg], &listc, &listv);
 		if (count == BINARY_ALL) {
 		    count = listc;
 		}
 	    }
 	    arg++;
-	    for (i = 0; (size_t)i < count; i++) {
+	    for (i = 0; i < count; i++) {
 		if (FormatNumber(interp, cmd, listv[i], &cursor) != TCL_OK) {
 		    Tcl_DecrRefCount(resultPtr);
 		    return TCL_ERROR;
@@ -1416,7 +1379,7 @@ BinaryScanCmd(
     unsigned char *buffer;	/* Start of result buffer. */
     const char *errorString;
     const char *str;
-    int offset, size, i;
+    size_t offset, size, i;
     size_t length = 0;
 
     Tcl_Obj *valuePtr, *elementPtr;
@@ -1536,7 +1499,7 @@ BinaryScanCmd(
 	    dest = TclGetString(valuePtr);
 
 	    if (cmd == 'b') {
-		for (i = 0; (size_t)i < count; i++) {
+		for (i = 0; i < count; i++) {
 		    if (i % 8) {
 			value >>= 1;
 		    } else {
@@ -1545,7 +1508,7 @@ BinaryScanCmd(
 		    *dest++ = (char) ((value & 1) ? '1' : '0');
 		}
 	    } else {
-		for (i = 0; (size_t)i < count; i++) {
+		for (i = 0; i < count; i++) {
 		    if (i % 8) {
 			value <<= 1;
 		    } else {
@@ -1591,7 +1554,7 @@ BinaryScanCmd(
 	    dest = TclGetString(valuePtr);
 
 	    if (cmd == 'h') {
-		for (i = 0; (size_t)i < count; i++) {
+		for (i = 0; i < count; i++) {
 		    if (i % 2) {
 			value >>= 4;
 		    } else {
@@ -1600,7 +1563,7 @@ BinaryScanCmd(
 		    *dest++ = hexdigit[value & 0xF];
 		}
 	    } else {
-		for (i = 0; (size_t)i < count; i++) {
+		for (i = 0; i < count; i++) {
 		    if (i % 2) {
 			value <<= 4;
 		    } else {
@@ -1657,7 +1620,7 @@ BinaryScanCmd(
 		goto badIndex;
 	    }
 	    if (count == BINARY_NOCOUNT) {
-		if ((length - offset) < (size_t)size) {
+		if (length < (size_t)size + offset) {
 		    goto done;
 		}
 		valuePtr = ScanNumber(buffer+offset, cmd, flags,
@@ -1672,7 +1635,7 @@ BinaryScanCmd(
 		}
 		TclNewObj(valuePtr);
 		src = buffer + offset;
-		for (i = 0; (size_t)i < count; i++) {
+		for (i = 0; i < count; i++) {
 		    elementPtr = ScanNumber(src, cmd, flags, &numberCachePtr);
 		    src += size;
 		    Tcl_ListObjAppendElement(NULL, valuePtr, elementPtr);
@@ -1703,7 +1666,7 @@ BinaryScanCmd(
 	    if (count == BINARY_NOCOUNT) {
 		count = 1;
 	    }
-	    if ((count == BINARY_ALL) || (count > (size_t)offset)) {
+	    if ((count == BINARY_ALL) || (count > offset)) {
 		offset = 0;
 	    } else {
 		offset -= count;

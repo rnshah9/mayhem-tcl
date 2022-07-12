@@ -386,9 +386,9 @@ static Tcl_WideUInt	Nokia770Twiddle(Tcl_WideUInt w);
  *	the first byte to be scanned. If bytes is NULL, then objPtr must be
  *	non-NULL, and the string representation of objPtr will be scanned
  *	(generated first, if necessary). The numBytes argument determines the
- *	number of bytes to be scanned. If numBytes is negative, the first NUL
- *	byte encountered will terminate the scan. If numBytes is non-negative,
- *	then no more than numBytes bytes will be scanned.
+ *	number of bytes to be scanned. If numBytes is TCL_INDEX_NONE, the first NUL
+ *	byte encountered will terminate the scan. Otherwise,
+ *	no more than numBytes bytes will be scanned.
  *
  *	The argument flags is an input that controls the numeric formats
  *	recognized by the parser. The flag bits are:
@@ -556,9 +556,9 @@ TclParseNumber(
 		return TCL_ERROR;
 	    }
 	    if (TclHasInternalRep(objPtr, &tclListType)) {
-		int length;
+		size_t length;
 		/* A list can only be a (single) number if its length == 1 */
-		TclListObjLength(NULL, objPtr, &length);
+		TclListObjLengthM(NULL, objPtr, &length);
 		if (length != 1) {
 		    return TCL_ERROR;
 		}

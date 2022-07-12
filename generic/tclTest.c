@@ -2184,7 +2184,7 @@ TesteventObjCmd(
 	"head", "tail", "mark", NULL
     };
     int posIndex;		/* Index of the chosen position */
-    static const Tcl_QueuePosition posNum[] = {
+    static const int posNum[] = {
 				/* Interpretation of the chosen position */
 	TCL_QUEUE_HEAD,
 	TCL_QUEUE_TAIL,
@@ -4309,7 +4309,7 @@ TestsetplatformCmd(
  *	A standard Tcl result.
  *
  * Side effects:
- *	When the packge given by argv[1] is loaded into an interpeter,
+ *	When the packge given by argv[1] is loaded into an interpreter,
  *	variable "x" in that interpreter is set to "loaded".
  *
  *----------------------------------------------------------------------
@@ -6984,7 +6984,7 @@ TestUtfNextCmd(
 	bytes = Tcl_GetString(objv[1]);
 	numBytes = objv[1]->length;
 
-    if (numBytes + 4 > sizeof(buffer)) {
+    if (numBytes + 4U > sizeof(buffer)) {
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		"\"testutfnext\" can only handle %" TCL_Z_MODIFIER "u bytes",
 		sizeof(buffer) - 4));
@@ -8021,7 +8021,7 @@ static int
 InterpCompiledVarResolver(
     TCL_UNUSED(Tcl_Interp *),
     const char *name,
-    TCL_UNUSED(int) /*length*/,
+    TCL_UNUSED(size_t) /*length*/,
     TCL_UNUSED(Tcl_Namespace *),
     Tcl_ResolvedVarInfo **rPtr)
 {
