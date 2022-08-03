@@ -1,6 +1,5 @@
 project: tcl
-target: tclsh
+target: tclsh9-0
 
 cmds:
-  - cmd: /repo/unix/tclsh /test.tcl
-    filepath: /test.tcl
+  - cmd: /install/bin/tclsh9.0 @@
